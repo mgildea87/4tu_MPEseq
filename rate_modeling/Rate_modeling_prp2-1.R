@@ -143,6 +143,7 @@ erroneous_genes = c("SNR17A;1","SNR17B;1",'SPBP8B7.06;1','SPBC800.04c;1','SPBC18
 
 
 #t_off calculation
+#0, 120, and 150 second time points are removed from here on and several outlier samples are removed from here on.                             
 
 t = c(time_points[4:10], time_points[13:17], time_points[19], time_points[23:29])
 x = vector()
