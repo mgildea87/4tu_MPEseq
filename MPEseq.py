@@ -19,6 +19,7 @@ def main(args):
 		sample_start_time = time.time()
 
 		infile = i.split('/')[-1]
+		condition = infile.split('_')[0]
 		logging.info(' Processing %s' % (infile))
 		
 		samples.append(infile)
@@ -58,45 +59,45 @@ def main(args):
 		SI = False
 		branch = False
 		
-		output = 'Combined_total_counts'
+		output = '%s_combined_total_counts_raw' % (condition)
 		sumCol = True
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 		
 		sumCol = False
 		unspliced = True
-		output = 'Combined_unspliced_counts'
+		output = '%s_combined_unspliced_counts_raw' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 
 		unspliced = False
 		SI = True
-		output = 'Combined_SI'
+		output = '%s_combined_SI' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)	
 
 		SI = False
 		spliced = True
-		output = 'Combined_spliced_counts'
+		output = '%s_combined_spliced_counts_raw' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 
 		suffix = '_Concordant_splicing_counts.txt'
 		spliced = True
 		unspliced = False
-		output = 'Combined_concordant_spliced_counts'
+		output = '%s_combined_concordant_spliced_counts_raw' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 		
 		suffix = '_Concordant_splicing_counts.txt'
 		spliced = False
 		unspliced = True
-		output = 'Combined_concordant_unspliced_counts'
+		output = '%s_combined_concordant_unspliced_counts_raw' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 
 		suffix = '_Branch_to3ss_counts.txt'
 		unspliced = False
 		branch = True
-		output = 'Combined_branch_to3ss_counts'
+		output = '%s_combined_branch_to3ss_counts_raw' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 
 		suffix = '_Branched_counts.txt'
-		output = 'Combined_branched_counts'
+		output = '%s_combined_lariat_int_counts_raw' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 
 	else:
