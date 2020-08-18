@@ -6,15 +6,15 @@ library(nlme)
 # Load in data
 setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/data/Pipeline_V9/')
 
-Total_counts_table = read.delim('Combined_total_counts.txt', header = T)
+Total_counts_table = read.delim('WT_combined_total_counts_raw.txt', header = T)
 row.names(Total_counts_table) = Total_counts_table[,1]
 Total_counts_table = Total_counts_table[,2:31]
 
-Total_unspliced_table = read.delim('Combined_concordant_unspliced_counts.txt', header = T)
+Total_unspliced_table = read.delim('WT_combined_concordant_unspliced_counts_raw.txt', header = T)
 row.names(Total_unspliced_table) = Total_unspliced_table[,1]
 Total_unspliced_table = Total_unspliced_table[,2:31]
 
-Total_pre1st_step_table = read.delim('pre1st_step_adjusted.txt', header = T)
+Total_pre1st_step_table = read.delim('WT_combined_pre1st_step_adjusted.txt', header = T)
 row.names(Total_pre1st_step_table) = Total_pre1st_step_table[,1]
 Total_pre1st_step_table = Total_pre1st_step_table[,2:31]
 

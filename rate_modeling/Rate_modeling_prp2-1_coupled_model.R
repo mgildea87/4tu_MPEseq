@@ -8,22 +8,21 @@ library(nlme)
 
 setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/prp2-1/Sequencing_data')
 
-Total_counts_table = read.delim('Combined_total_counts.txt', header = T)
+Total_counts_table = read.delim('prp2-1_combined_total_counts_raw.txt', header = T)
 row.names(Total_counts_table) = Total_counts_table[,1]
-Total_counts_table = Total_counts_table[,2:30]
+Total_counts_table = Total_counts_table[,2:31]
 
-Total_unspliced_table = read.delim('Combined_concordant_unspliced_counts.txt', header = T)
+Total_unspliced_table = read.delim('prp2-1_combined_concordant_unspliced_counts_raw.txt', header = T)
 row.names(Total_unspliced_table) = Total_unspliced_table[,1]
-Total_unspliced_table = Total_unspliced_table[,2:30]
+Total_unspliced_table = Total_unspliced_table[,2:31]
 
-Total_pre1st_step_table = read.delim('Pre_1st_step_adjusted.txt', header = T)
+Total_pre1st_step_table = read.delim('prp2-1_combined_pre1st_step_adjusted.txt', header = T)
 row.names(Total_pre1st_step_table) = Total_pre1st_step_table[,1]
-Total_pre1st_step_table = Total_pre1st_step_table[,2:30]
+Total_pre1st_step_table = Total_pre1st_step_table[,2:31]
 
-Total_branched_table = read.delim('branched_adjusted.txt', header = T)
+Total_branched_table = read.delim('prp2-1_combined_lariat_int_adjusted.txt', header = T)
 row.names(Total_branched_table) = Total_branched_table[,1]
-Total_branched_table = Total_branched_table[,2:30]
-
+Total_branched_table = Total_branched_table[,2:31]
 #normalization factor
 
 spike_in_counts = colSums(Total_counts_table[307:311,])
