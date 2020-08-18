@@ -78,8 +78,8 @@ def main(args):
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 
 		suffix = '_Concordant_splicing_counts.txt'
-		spliced = False
-		unspliced = True
+		spliced = True
+		unspliced = False
 		output = 'Combined_concordant_spliced_counts'
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 		
