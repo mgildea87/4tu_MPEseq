@@ -1,0 +1,16 @@
+### STAR   --runMode genomeGenerate   --runThreadN 8   --genomeDir STAR_genome_2_7   --genomeFastaFiles concat_genome.fa      --genomeSAindexNbases 11   --sjdbGTFfile concat_features.gff   --sjdbGTFfeatureExon CDS   --sjdbGTFtagExonParentTranscript Parent   --sjdbOverhang 74
+### GstrandBit 32
+versionGenome	2.7.1a
+genomeFastaFiles	concat_genome.fa 
+genomeSAindexNbases	11
+genomeChrBinNbits	18
+genomeSAsparseD	1
+sjdbOverhang	74
+sjdbFileChrStartEnd	- 
+sjdbGTFfile	concat_features.gff
+sjdbGTFchrPrefix	-
+sjdbGTFfeatureExon	CDS
+sjdbGTFtagExonParentTranscript	Parent
+sjdbGTFtagExonParentGene	gene_id
+sjdbInsertSave	Basic
+genomeFileSizes	29384256 211143920
