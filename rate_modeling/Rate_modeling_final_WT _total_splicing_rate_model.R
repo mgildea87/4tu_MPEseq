@@ -5,9 +5,6 @@ require(nlme)
 
 # Load in data
 setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/data/Pipeline_V9/')
-SI_table = read.delim('Combined_SI.txt', header = T)
-row.names(SI_table) = SI_table[,1]
-SI_table = SI_table[,2:31]
 
 Total_counts_table = read.delim('Combined_total_counts.txt', header = T)
 row.names(Total_counts_table) = Total_counts_table[,1]
@@ -17,18 +14,9 @@ Total_unspliced_table = read.delim('Combined_concordant_unspliced_counts.txt', h
 row.names(Total_unspliced_table) = Total_unspliced_table[,1]
 Total_unspliced_table = Total_unspliced_table[,2:31]
 
-
 Total_pre1st_step_table = read.delim('pre1st_step_adjusted.txt', header = T)
 row.names(Total_pre1st_step_table) = Total_pre1st_step_table[,1]
 Total_pre1st_step_table = Total_pre1st_step_table[,2:31]
-
-Total_branched_table = read.delim('branched_adjusted.txt', header = T)
-row.names(Total_branched_table) = Total_branched_table[,1]
-Total_branched_table = Total_branched_table[,2:31]
-
-Total_spliced_table = read.delim('Combined_spliced_counts.txt', header = T)
-row.names(Total_spliced_table) = Total_spliced_table[,1]
-Total_spliced_table = Total_spliced_table[,2:31]
 
 #normalization factor
 spike_in_counts = colSums(Total_counts_table[307:311,])
@@ -104,40 +92,30 @@ Total_pre1st_back = apply(Total_pre1st_step_table_norm, MARGIN = 1, function(x) 
 Total_pre1st_step_table_norm= cbind(Total_pre1st_step_table_norm[,1:10]-Total_pre1st_back,Total_pre1st_step_table_norm[,11:20]-Total_pre1st_back,Total_pre1st_step_table_norm[,21:30]-Total_pre1st_back)
 Total_pre1st_step_table_norm[which(Total_pre1st_step_table_norm < 0)] = 0
 
-Total_branched_table_norm = mapply('*', Total_branched_table, norm_fac)
-Total_branched_back = apply(Total_branched_table_norm, MARGIN = 1, function(x) mean(c(x[1],x[11],x[21])))
-Total_branched_table_norm= cbind(Total_branched_table_norm[,1:10]-Total_branched_back,Total_branched_table_norm[,11:20]-Total_branched_back,Total_branched_table_norm[,21:30]-Total_branched_back)
-Total_branched_table_norm[which(Total_branched_table_norm < 0)] = 0
-
-Total_spliced_table_norm = mapply('*', Total_spliced_table, norm_fac)
-Total_spliced_back = apply(Total_spliced_table_norm, MARGIN = 1, function(x) mean(c(x[1],x[11],x[21])))
-Total_spliced_table_norm= cbind(Total_spliced_table_norm[,1:10]-Total_spliced_back,Total_spliced_table_norm[,11:20]-Total_spliced_back,Total_spliced_table_norm[,21:30]-Total_spliced_back)
-Total_spliced_table_norm[which(Total_spliced_table_norm < 0)] = 0
-
 #these are mostly annotated predicted introns with no evidence of splicing in our data. 
 erroneous_genes = c("SNR17A;1","SNR17B;1",'SPBP8B7.06;1','SPBC800.04c;1','SPBC18E5.06;1','SPAC1805.13;1','SPAC15E1.03;1',
-                    'YPR202W;1',
-                    'YPL283C;1',
-                    'YOR318C;1',
-                    'YNL339C;1',
-                    'YML133C;1',
-                    'YLR464W;1',
-                    'YLR202C;1',
-                    'YLL067C;1',
-                    'YLL066C;1',
-                    'YJR112W-A;1',
-                    'YJR079W;1',
-                    'YHR218W;1',
-                    'YGR296W;1',
-                    'YDR424C;1',
-                    'YEL076C-A;1',
-                    'YDR535C;1',
-                    'YBL111C;1',
-                    'YJL225C;1',
-                    'YIL177C;1',
-                    'YHL050C;1',
-                    'YBR219C;1',
-                    'YLR054C;1'
+'YPR202W;1',
+'YPL283C;1',
+'YOR318C;1',
+'YNL339C;1',
+'YML133C;1',
+'YLR464W;1',
+'YLR202C;1',
+'YLL067C;1',
+'YLL066C;1',
+'YJR112W-A;1',
+'YJR079W;1',
+'YHR218W;1',
+'YGR296W;1',
+'YDR424C;1',
+'YEL076C-A;1',
+'YDR535C;1',
+'YBL111C;1',
+'YJL225C;1',
+'YIL177C;1',
+'YHL050C;1',
+'YBR219C;1',
+'YLR054C;1'
 )
 
 
@@ -213,4 +191,4 @@ for (i in 1:nrow(Total_unspliced_table)){
     Rates_mat[i,6] = confint2(m, level = 0.9)[1,2]
   }
 }
-write.csv(Rates_mat, "Combined_rates_WT.csv")
+write.csv(Rates_mat, "Combined_rates_WT_total_splicing_rate_model.csv")

@@ -5,9 +5,6 @@ library(nlme)
 
 # Load in data
 setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/data/Pipeline_V9/')
-SI_table = read.delim('Combined_SI.txt', header = T)
-row.names(SI_table) = SI_table[,1]
-SI_table = SI_table[,2:31]
 
 Total_counts_table = read.delim('Combined_total_counts.txt', header = T)
 row.names(Total_counts_table) = Total_counts_table[,1]
@@ -17,7 +14,6 @@ Total_unspliced_table = read.delim('Combined_concordant_unspliced_counts.txt', h
 row.names(Total_unspliced_table) = Total_unspliced_table[,1]
 Total_unspliced_table = Total_unspliced_table[,2:31]
 
-
 Total_pre1st_step_table = read.delim('pre1st_step_adjusted.txt', header = T)
 row.names(Total_pre1st_step_table) = Total_pre1st_step_table[,1]
 Total_pre1st_step_table = Total_pre1st_step_table[,2:31]
@@ -25,10 +21,6 @@ Total_pre1st_step_table = Total_pre1st_step_table[,2:31]
 Total_branched_table = read.delim('branched_adjusted.txt', header = T)
 row.names(Total_branched_table) = Total_branched_table[,1]
 Total_branched_table = Total_branched_table[,2:31]
-
-Total_spliced_table = read.delim('Combined_spliced_counts.txt', header = T)
-row.names(Total_spliced_table) = Total_spliced_table[,1]
-Total_spliced_table = Total_spliced_table[,2:31]
 
 #normalization factor
 spike_in_counts = colSums(Total_counts_table[307:311,])

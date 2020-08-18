@@ -49,10 +49,10 @@ def main(args):
 		else:
 			logging.info('\tSkipping Pooling of Reads')
 
-	#combine count files from each sample
+	#combine individual sample count files into tables for each count type across all samples
 	if not args.skipCombine:
 		logging.info('\tCombining count files')
-		suffix = '_Splicing_counts.txt'
+		suffix = '_splicing_counts.txt'
 		sumCol = False
 		unspliced = False
 		spliced = False
@@ -78,25 +78,25 @@ def main(args):
 		output = '%s_combined_spliced_counts_raw' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 
-		suffix = '_Concordant_splicing_counts.txt'
+		suffix = '_concordant_splicing_counts.txt'
 		spliced = True
 		unspliced = False
 		output = '%s_combined_concordant_spliced_counts_raw' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 		
-		suffix = '_Concordant_splicing_counts.txt'
+		suffix = '_concordant_splicing_counts.txt'
 		spliced = False
 		unspliced = True
 		output = '%s_combined_concordant_unspliced_counts_raw' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 
-		suffix = '_Branch_to3ss_counts.txt'
+		suffix = '_branch_to3ss_counts.txt'
 		unspliced = False
 		branch = True
 		output = '%s_combined_branch_to3ss_counts_raw' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 
-		suffix = '_Branched_counts.txt'
+		suffix = '_lariat_int_counts.txt'
 		output = '%s_combined_lariat_int_counts_raw' % (condition)
 		combine(suffix, samples, output, sumCol, unspliced, spliced, SI, branch)
 
@@ -105,6 +105,7 @@ def main(args):
 	
 	logging.info('Total Time: %ds' % (time.time()-global_start_time))
 
+#read in intron annotation files and generate HTSeq.genomicarrayofsets structure for feature counting. Should parameterize anchor length (minimum mapped bases into the intron. 3 here)
 def readTargetFeatures(interval, Branch_windows, Branch_to3ss):
 	intron_set = set()
 	fiveSS = {}
@@ -161,7 +162,8 @@ def align(infile, index, read_1_length):
 	with open('%s/%s_alignment.log' % (infile, infile), 'w') as alignOut:
 		alignOut.write(err)
 	
-#removes read pairs with insert sizes <33bp
+#removes read pairs with insert sizes <33bp and logs their number. Originally these reads were saved in a separate file for analysis. This should be cleaned up a bit (e.g. intermediate bam files probably arent necessary) 
+#These result from RT primers which were not extended during reverse transcription and were not completely purified away during streptavidin bead purification.
 	bam = pysam.AlignmentFile('%s/%s_Aligned.out.bam' % (infile, infile) , 'rb')
 	newbam = pysam.AlignmentFile('%s/%s_temp.bam' % (infile, infile), "wb", template=bam)
 	newbam2 = pysam.AlignmentFile('%s/%s_tooshort.bam' % (infile, infile), "wb", template=bam)	
@@ -191,6 +193,11 @@ def align(infile, index, read_1_length):
 	os.remove('%s/%s_temp.bam' % (infile, infile))
 	os.remove('%s/%s_Aligned.out.bam' % (infile, infile))
 
+#Feature counting. This function counts total spliced and unspliced reads and outputs them in "Splicing_counts.txt'. 
+#Concordant unspliced, and spliced reads output is "concordant_splicing_counts.txt"
+#lariat intermediate, and ambiguous unspliced (branch to 3'SS) reads are identified by the first mapped position of read 2's. output: "lariat_int_counts.txt" and "branch_to3ss_counts.txt"
+#"junctionCounts.txt" contains constitutive splicing counts (spliced reads that cross supplied exon junctions) as well as all identified alternative events in the categories: 
+#exon skipping, alternative 5'SS, and alternative 3'SS 
 def pool(infile, targets, intron_set, fiveSS, threeSS, Branches, Branchto3ss):
 	
 	SI_counts = defaultdict(int)
@@ -291,7 +298,7 @@ def pool(infile, targets, intron_set, fiveSS, threeSS, Branches, Branchto3ss):
 						if intron:
 							SI_counts[('concordant_premature', intron)] +=1
 
-#read 2 counting
+# Counts starting position of read 2's that fall within specified lariat intermediate and branch to 3'SS windows
 				if intron > 0 and s.aligned == True and s.proper_pair == True and s.aQual > 5:		
 					chrome = s.iv.chrom
 					start = s.iv.start
@@ -302,32 +309,32 @@ def pool(infile, targets, intron_set, fiveSS, threeSS, Branches, Branchto3ss):
 					else:	
 						geneint = HTSeq.GenomicPosition(chrome, end, strand)
 					if intron in Branches[ geneint ] and len(Branches[ geneint ]) == 1:
-						SI_counts[('Branched', intron)] += 1
+						SI_counts[('lariat_int', intron)] += 1
 					if intron in Branchto3ss[ geneint ] and len(Branchto3ss[ geneint ]) == 1:
-						SI_counts[('Branch_to3ss', intron)] += 1
+						SI_counts[('branch_to3ss', intron)] += 1
 
-	with open('%s/%s_Splicing_counts.txt' % (infile, infile), 'w') as out:
+	with open('%s/%s_splicing_counts.txt' % (infile, infile), 'w') as out:
 		for intron in sorted(intron_set):
 			out.write('%s\t%d\t%d\n' % (intron, SI_counts[('mature', intron)], SI_counts[('premature', intron)]))
 
-	with open('%s/%s_Concordant_splicing_counts.txt' % (infile, infile), 'w') as out:
+	with open('%s/%s_concordant_splicing_counts.txt' % (infile, infile), 'w') as out:
 		for intron in sorted(intron_set):
 			out.write('%s\t%d\t%d\n' % (intron, SI_counts[('concordant_mature', intron)], SI_counts[('concordant_premature', intron)]))
 
-	with open('%s/%s_Branched_counts.txt' % (infile, infile), 'w') as out:
+	with open('%s/%s_lariat_int_counts.txt' % (infile, infile), 'w') as out:
 		for intron in sorted(intron_set):
-			out.write('%s\t%d\n' % (intron, SI_counts[('Branched', intron)]))
+			out.write('%s\t%d\n' % (intron, SI_counts[('lariat_int', intron)]))
 
-	with open('%s/%s_Branch_to3ss_counts.txt' % (infile, infile), 'w') as out:
+	with open('%s/%s_branch_to3ss_counts.txt' % (infile, infile), 'w') as out:
 		for intron in sorted(intron_set):
-			out.write('%s\t%d\n' % (intron, SI_counts[('Branch_to3ss', intron)]))			
+			out.write('%s\t%d\n' % (intron, SI_counts[('branch_to3ss', intron)]))			
 
-	with open('%s/%s_junctionCounts.txt' % (infile, infile), 'w') as out:
+	with open('%s/%s_junction_counts.txt' % (infile, infile), 'w') as out:
 		out.write('Gene\tUpstream\tDownstream\tType\tCount\n')
 		for junc in sorted(junction_counts):
 			out.write('%s\t%d\t%d\t%s\t%d\n' % (junc[1], junc[2], junc[3], junc[4], junction_counts[junc]))
 
-
+#Combine all count files of specified count type across all samples
 def combine (suffix, prefix_list, output_prefix, sumCol, unspliced, spliced, SI, branch):
 	repos = {}
 	gene = 'gene'
@@ -368,6 +375,8 @@ def combine (suffix, prefix_list, output_prefix, sumCol, unspliced, spliced, SI,
 				output = output + '\t' + str(repos[i][col])
 			Out.write('%s%s\n' % (i, output.rstrip()))
 
+#Add adjust function for lariat intermediate and pre 1st step counts (currently performing this elsewhere)
+
 def parseArguments():
 	
 	parser = argparse.ArgumentParser(prog="MPE_PipeLine_PE", description='', usage='%(prog)s [options]')
@@ -377,7 +386,7 @@ def parseArguments():
 	pool = parser.add_argument_group('Pooling Options')
 	combine = parser.add_argument_group('File Combine Options')
 	
-	required.add_argument('-i', '--input_files', nargs='+', required=True, help=' Basename of files to run. (fastq.gz)', metavar='', dest='input_files')
+	required.add_argument('-i', '--input_files', nargs='+', required=True, help=' Basename of files to run. file name format = "condition_samplename_R1/2.fastq.gz" basename = "condition_samplename" ' , metavar='', dest='input_files')
 	trim.add_argument('--skip_Trim', action='store_true', help=' Skip the trimming of adapter sequences. Assumes files already exist.', dest='skipTrim')
 	alignment.add_argument('--skip_Align', action='store_true', help=' Skip the alignment of reads to genome. Assumes files already exist.', dest='skipAlignment')
 	alignment.add_argument('--STAR_index', default='/home/mag456/genomes/concat_cere_pombe/STAR_genome_2_7/', help=' Location of STAR index files.', dest='STARIndex')
