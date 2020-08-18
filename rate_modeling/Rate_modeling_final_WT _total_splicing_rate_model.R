@@ -1,7 +1,7 @@
 
 library(minpack.lm)
 library(nlstools)
-require(nlme)
+library(nlme)
 
 # Load in data
 setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/data/Pipeline_V9/')

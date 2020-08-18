@@ -1,7 +1,7 @@
 
 library(minpack.lm)
 library(nlstools)
-require(nlme)
+library(nlme)
 
 
 # Load in data
