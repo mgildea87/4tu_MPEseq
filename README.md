@@ -5,4 +5,4 @@ Intron names in the annotation files used throughout are of this format "gene;in
 
 The .r scripts in rate_modeling/ were used to generate the data in the paper and were written to run on data from their respective cell type and modeling method. The "coupled_model" scripts output synthesis, total, 1st, and 2nd step rate estimates as well as 90% confidence intervals for each parameter estimate from the coupled model. The "total_splicing_rate_model" scripts output synthesis, and total splicing rate estimates as well as 90% confidence intervals for each parameter estimate from the total splicing rate model.
 
-The script and supporting files for the position weight matrix splice scores are included in PWM_splicesite_scores.
+The script and supporting files for the position weight matrix splice site scores are included in PWM_splicesite_scores.
