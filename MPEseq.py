@@ -1,6 +1,6 @@
 #!/usr/bin/env python2.7
 import argparse, subprocess, os, gzip, logging, time, collections, HTSeq, pysam, sys
-from itertools import izip_longest
+from itertools import izip_longest, izip
 from collections import defaultdict
 
 logging.basicConfig(filename='spliceSeq.log', filemode='w', format='%(asctime)s %(message)s', datefmt='%Y-%m-%d %H:%M:%S', level=logging.INFO)
@@ -102,6 +102,15 @@ def main(args):
 
 	else:
 		logging.info('\tSkipping count file combine')
+
+	if not args.skipUnsplicedadjust:
+		logging.info('\tAdjusting lariat and pre 1st step counts')
+		concordant_unspliced = '%s_combined_concordant_unspliced_counts_raw.txt' % (condition)
+		lariat_int = '%s_combined_lariat_int_counts_raw.txt' % (condition)
+		branch_to3ss = '%s_combined_branch_to3ss_counts_raw.txt' % (condition)
+		unsplicedAdjust(concordant_unspliced, lariat_int, branch_to3ss, condition)
+	else:
+		logging.info('\tSkipping adjusting lariat and pre 1st step counts')
 	
 	logging.info('Total Time: %ds' % (time.time()-global_start_time))
 
@@ -375,7 +384,36 @@ def combine (suffix, prefix_list, output_prefix, sumCol, unspliced, spliced, SI,
 				output = output + '\t' + str(repos[i][col])
 			Out.write('%s%s\n' % (i, output.rstrip()))
 
-#Add adjust function for lariat intermediate and pre 1st step counts (currently performing this elsewhere)
+#Assign ambiguous unspliced reads (read 2 aligns in the branch to 3'SS window) to lariat intermediate or pre 1st step based on the ratio of unambiguous reads
+def unsplicedAdjust(concordant_unspliced, lariat_int, branch_to3ss, condition):
+	with open(concordant_unspliced, 'r') as concordant_unspliced, open(lariat_int, 'r') as lariat_int, open(branch_to3ss, 'r') as branch_to3ss, open('%s_combined_lariat_int_adjusted.txt' % (condition), 'w') as lar_adj, open('%s_combined_pre1st_step_adjusted.txt' % (condition), 'w') as pre1st_adj:
+		for un, lar, amb_pre in izip(concordant_unspliced, lariat_int, branch_to3ss):
+			lar_adj_list = []
+			pre_adj_list = []
+			for sample_un, sample_lar, sample_amb_pre in izip(un.split('\t'),lar.split('\t'),amb_pre.split('\t')):
+				try:
+					float(sample_un)
+				except:	
+					pre_adj_list.append(sample_un.rstrip('\n'))
+					lar_adj_list.append(sample_un.rstrip('\n'))
+					continue	
+				try:
+			 		unamb_pre = float(sample_un)-float(sample_lar)-float(sample_amb_pre)
+			 		pre_adj_val = unamb_pre + float(sample_amb_pre) * unamb_pre/(float(sample_lar)+float(unamb_pre))
+					lar_adj_val = float(sample_lar) + float(sample_amb_pre) * (1-(unamb_pre/(float(sample_lar)+float(unamb_pre))))
+					if len(str(pre_adj_val)) > 11:
+						rnd = 10 - len(str(pre_adj_val).split('.')[0])
+						pre_adj_val = round(pre_adj_val,rnd)
+					if len(str(lar_adj_val)) > 11:
+						rnd = 10 - len(str(lar_adj_val).split('.')[0])
+						lar_adj_val = round(lar_adj_val,rnd)
+			 		pre_adj_list.append(str(pre_adj_val))
+			 		lar_adj_list.append(str(lar_adj_val))
+				except ZeroDivisionError:
+					pre_adj_list.append('0')
+					lar_adj_list.append('0')
+			pre1st_adj.write('%s\n' % ('\t'.join(i for i in pre_adj_list)))
+			lar_adj.write('%s\n' % ('\t'.join(i for i in lar_adj_list)))
 
 def parseArguments():
 	
@@ -385,6 +423,7 @@ def parseArguments():
 	alignment = parser.add_argument_group('Alignment Options')
 	pool = parser.add_argument_group('Pooling Options')
 	combine = parser.add_argument_group('File Combine Options')
+	unsplicedAdjust = parser.add_argument_group('unspliced count adjust options')
 	
 	required.add_argument('-i', '--input_files', nargs='+', required=True, help=' Basename of files to run. file name format = "condition_samplename_R1/2.fastq.gz" basename = "condition_samplename" ' , metavar='', dest='input_files')
 	trim.add_argument('--skip_Trim', action='store_true', help=' Skip the trimming of adapter sequences. Assumes files already exist.', dest='skipTrim')
@@ -397,7 +436,8 @@ def parseArguments():
 	pool.add_argument('--Branch_to3ss', default='/home/mag456/genomes/cere/cere_annotations/3SSto6bpDownStreamofBranch.txt', help=' File containing branch intervals for which to count reads.', dest='Branch_to3ss')
 	pool.add_argument('--junction_anchor', default=1, type=int, help=' Required length of anchor on each side of junction.', dest='junction_anchor')
 	combine.add_argument('--skip_Combine', action='store_true', help='Skip combining count files', dest='skipCombine')
-	
+	unsplicedAdjust.add_argument('--skip_Unsplicedadjust', action='store_true', help='Skip pre 1st step and lariat intermediate count adjust', dest='skipUnsplicedadjust')
+
 	return parser.parse_args()
 
 args = parseArguments()
