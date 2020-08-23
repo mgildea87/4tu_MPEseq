@@ -1,10 +1,12 @@
+
 library(minpack.lm)
 library(nlstools)
 library(nlme)
 
+
 # Load in data
 
-setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/prp2-1/Sequencing_data')
+setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/prp2-1/Sequencing_data/Final_modeling')
 
 Total_counts_table = read.delim('prp2-1_combined_total_counts_raw.txt', header = T)
 row.names(Total_counts_table) = Total_counts_table[,1]
@@ -18,7 +20,9 @@ Total_pre1st_step_table = read.delim('prp2-1_combined_pre1st_step_adjusted.txt',
 row.names(Total_pre1st_step_table) = Total_pre1st_step_table[,1]
 Total_pre1st_step_table = Total_pre1st_step_table[,2:30]
 
-
+Total_branched_table = read.delim('prp2-1_combined_lariat_int_adjusted.txt', header = T)
+row.names(Total_branched_table) = Total_branched_table[,1]
+Total_branched_table = Total_branched_table[,2:30]
 #normalization factor
 
 spike_in_counts = colSums(Total_counts_table[307:311,])
@@ -74,13 +78,12 @@ norm_fac = c(norm_fac , 1)
 norm_fac = c(norm_fac, exp(mean(log(na.omit(as.numeric(c(d_wooutliers[2,2:6], d_wooutliers[21,2:6])))))))
 for (i in 1:8){
   norm_fac = c(norm_fac, exp(mean(log(na.omit(as.numeric(c(d_wooutliers[2+i,2:6], d_wooutliers[11+i,2:6], d_wooutliers[21+i,2:6])))))))
-  }  
+}  
 norm_fac = c(rep(norm_fac,3))
 norm_fac = c(norm_fac[1:11], norm_fac[13:30])
 
 
 #normalize counts and establish introns to remove from further analysis
-
 
 Total_unspliced_table_norm = mapply('*', Total_unspliced_table, norm_fac)
 Total_unspliced_back = apply(Total_unspliced_table_norm, MARGIN = 1, function(x) mean(c(x[1],x[11],x[20])))
@@ -91,6 +94,11 @@ Total_pre1st_step_table_norm = mapply('*', Total_pre1st_step_table, norm_fac)
 Total_pre1st_back = apply(Total_pre1st_step_table_norm, MARGIN = 1, function(x) mean(c(x[1],x[11],x[20])))
 Total_pre1st_step_table_norm= cbind(Total_pre1st_step_table_norm[,1:10]-Total_pre1st_back,Total_pre1st_step_table_norm[,11:19]-Total_pre1st_back,Total_pre1st_step_table_norm[,20:29]-Total_pre1st_back)
 Total_pre1st_step_table_norm[which(Total_pre1st_step_table_norm < 0)] = 0
+
+Total_branched_table_norm = mapply('*', Total_branched_table, norm_fac)
+Total_branched_back = apply(Total_branched_table_norm, MARGIN = 1, function(x) mean(c(x[1],x[11],x[20])))
+Total_branched_table_norm= cbind(Total_branched_table_norm[,1:10]-Total_branched_back,Total_branched_table_norm[,11:19]-Total_branched_back,Total_branched_table_norm[,20:29]-Total_branched_back)
+Total_branched_table_norm[which(Total_branched_table_norm < 0)] = 0
 
 #these are mostly annotated predicted introns with no evidence of splicing in our data. 
 erroneous_genes = c("SNR17A;1","SNR17B;1",'SPBP8B7.06;1','SPBC800.04c;1','SPBC18E5.06;1','SPAC1805.13;1','SPAC15E1.03;1',
@@ -120,6 +128,7 @@ erroneous_genes = c("SNR17A;1","SNR17B;1",'SPBP8B7.06;1','SPBC800.04c;1','SPBC18
 
 
 #t_off calculation
+#0, 120, and 150 second time points are removed from here on and several outlier samples are removed from here on.                             
 
 t = c(time_points[4:10], time_points[13:17], time_points[19], time_points[23:29])
 x = vector()
@@ -146,24 +155,78 @@ for (i in 1:nrow(Total_pre1st_step_table)){
 }
 t_off = median(na.omit(x))
 
-
-setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/prp2-1/Sequencing_data/Final_modeling')
-colnames = c("Total_splicing_rate_total_unspliced_counts",
-             "Total_splicing_rate_total_unspliced_counts_90%CI_lower", 
-             "Total_splicing_rate_total_unspliced_counts_90%CI_upper", 
-             "Synthesis_rate_total_unspliced_counts",
-             "Synthesis_rate_total_unspliced_counts_90%CI_lower",
-             "Synthesis_rate_total_unspliced_counts_90%CI_upper")
-Rates_mat = matrix(nrow = nrow(Total_unspliced_table), ncol = length(colnames))
-colnames(Rates_mat) <- colnames
-row.names(Rates_mat) <- row.names(Total_unspliced_table)
+#combined rates models
+colnames_coupled = c("synthesis_coupled_model",
+             "synthesis_coupled_model_90%CI_lower", 
+             "synthesis_coupled_model_90%CI_upper", 
+             "step1_rate_coupled_model",
+             "step1_rate_coupled_model_90%CI_lower",
+             "step1_rate_coupled_model_90%CI_upper",
+             "step2_rate_coupled_model",
+             "step2_rate_coupled_model_90%CI_lower",
+             "step2_rate_coupled_model_90%CI_upper")
+Rates_mat_coupled = matrix(nrow = nrow(Total_unspliced_table), ncol = length(colnames_coupled))
+colnames(Rates_mat_coupled) <- colnames_coupled
+row.names(Rates_mat_coupled) <- row.names(Total_unspliced_table)
 
 t = c(time_points[4:10], time_points[13:17], time_points[19], time_points[23:29])
 
 for (i in 1:nrow(Total_unspliced_table)){
   gene = i
-  if(row.names(Rates_mat)[i] %in% erroneous_genes){
-    Rates_mat[i,1:6] = NA
+  if(row.names(Rates_mat_coupled)[i] %in% erroneous_genes){
+    Rates_mat_coupled[i,1:9] = NA
+    next
+  }
+  y = c(Total_pre1st_step_table_norm[gene,4:10], Total_pre1st_step_table_norm[gene,13:17],Total_pre1st_step_table_norm[gene,19], Total_pre1st_step_table_norm[gene,23:29])
+  x = c(Total_branched_table_norm[gene,4:10], Total_branched_table_norm[gene,13:17], Total_branched_table_norm[gene,19],Total_branched_table_norm[gene,23:29])
+  d = NA
+  p = NA
+  d = data.frame(val = c(y,x), time = rep(t,2), ispre = c(rep(1,length(y)), rep(0,length(y))),isbra = c(rep(0,length(x)), rep(1,length(x))))
+  tr <- tryCatch(
+    p <- nlsLM(val ~ isbra*((u/(u2*(u2-u1))) * (u2*(1-exp(-u1*(time-t_off))) - u1*(1-exp(-u2*(t-t_off))))) + 
+                 ispre*(u/u1 * (1-(exp(-u1*(time-t_off))))), start = list(u = 1000, u1 = 0.05, u2 = .005), lower = c(0,0,0), 
+               weights = 1/time^2, data = d), 
+    error = function(e) e)
+  if(inherits(tr, "error")){
+    Rates_mat_coupled[i,1:9] = NA
+  }
+  else if(length(which(y == 0)) > 3){
+    Rates_mat_coupled[i,1:9] = NA
+  }
+  else if(length(which(x == 0)) > 3){
+    Rates_mat_coupled[i,1:9] = NA
+  }
+  else{
+    Rates_mat_coupled[i,1] = coef(p)[1]
+    Rates_mat_coupled[i,2] = confint2(p, level = 0.9)[1,1]
+    Rates_mat_coupled[i,3] = confint2(p, level = 0.9)[1,2]
+    Rates_mat_coupled[i,4] = log(2)/coef(p)[2]
+    Rates_mat_coupled[i,5] = log(2)/confint2(p, level = 0.9)[2,1]
+    Rates_mat_coupled[i,6] = log(2)/confint2(p, level = 0.9)[2,2]
+    Rates_mat_coupled[i,7] = log(2)/coef(p)[3]
+    Rates_mat_coupled[i,8] = log(2)/confint2(p, level = 0.9)[3,1]
+    Rates_mat_coupled[i,9] = log(2)/confint2(p, level = 0.9)[3,2]
+  }
+}
+write.csv(Rates_mat_coupled, "Combined_rates_prp2-1_coupled_model.csv")
+
+#Total unspliced rates model
+colnames_total = c("Total_splicing_rate_total_unspliced_counts",
+             "Total_splicing_rate_total_unspliced_counts_90%CI_lower", 
+             "Total_splicing_rate_total_unspliced_counts_90%CI_upper", 
+             "Synthesis_rate_total_unspliced_counts",
+             "Synthesis_rate_total_unspliced_counts_90%CI_lower",
+             "Synthesis_rate_total_unspliced_counts_90%CI_upper")
+Rates_mat_total = matrix(nrow = nrow(Total_unspliced_table), ncol = length(colnames_total))
+colnames(Rates_mat_total) <- colnames_total
+row.names(Rates_mat_total) <- row.names(Total_unspliced_table)
+
+t = c(time_points[4:10], time_points[13:17], time_points[19], time_points[23:29])
+
+for (i in 1:nrow(Total_unspliced_table)){
+  gene = i
+  if(row.names(Rates_mat_total)[i] %in% erroneous_genes){
+    Rates_mat_total[i,1:6] = NA
     next
   }
   y = c(Total_unspliced_table_norm[gene,4:10], Total_unspliced_table_norm[gene,13:17],Total_unspliced_table_norm[gene,19], Total_unspliced_table_norm[gene,23:29])
@@ -172,21 +235,20 @@ for (i in 1:nrow(Total_unspliced_table)){
     m<-nlsLM(y ~ u/s * (1-(exp(-s*(t-t_off)))), start = list(u = 500, s = .0005), lower = c(0,0), weights = 1/t^2), 
     error = function(e) e) 
   if(inherits(tr, "error")){
-    Rates_mat[i,1:3] = NA
-    Rates_mat[i,4:6] = NA
+    Rates_mat_total[i,1:3] = NA
+    Rates_mat_total[i,4:6] = NA
   }
   else if(length(which(y == 0)) > 4){
-    Rates_mat[i,1:3] = NA
-    Rates_mat[i,4:6] = NA
+    Rates_mat_total[i,1:3] = NA
+    Rates_mat_total[i,4:6] = NA
   }
   else{
-    Rates_mat[i,1] = log(2)/coef(m)[2]
-    Rates_mat[i,2] = log(2)/confint2(m, level = 0.9)[2,1]
-    Rates_mat[i,3] = log(2)/confint2(m, level = 0.9)[2,2]
-    Rates_mat[i,4] = coef(m)[1]
-    Rates_mat[i,5] = confint2(m, level = 0.9)[1,1]
-    Rates_mat[i,6] = confint2(m, level = 0.9)[1,2]
+    Rates_mat_total[i,1] = log(2)/coef(m)[2]
+    Rates_mat_total[i,2] = log(2)/confint2(m, level = 0.9)[2,1]
+    Rates_mat_total[i,3] = log(2)/confint2(m, level = 0.9)[2,2]
+    Rates_mat_total[i,4] = coef(m)[1]
+    Rates_mat_total[i,5] = confint2(m, level = 0.9)[1,1]
+    Rates_mat_total[i,6] = confint2(m, level = 0.9)[1,2]
   }
 }
-write.csv(Rates_mat, "Combined_rates_prp2-1_total_splicing_rate_model.csv")
-
+write.csv(Rates_mat_total, "Combined_rates_prp2-1_total_splicing_rate_model.csv")
