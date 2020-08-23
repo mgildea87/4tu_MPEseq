@@ -4,7 +4,7 @@ library(nlstools)
 library(nlme)
 
 # Load in data
-setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/data/Pipeline_V9/')
+setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/data/Pipeline_V9/Final_modeling')
 
 Total_counts_table = read.delim('WT_combined_total_counts_raw.txt', header = T)
 row.names(Total_counts_table) = Total_counts_table[,1]
@@ -96,10 +96,10 @@ Total_pre1st_back = apply(Total_pre1st_step_table_norm, MARGIN = 1, function(x) 
 Total_pre1st_step_table_norm= cbind(Total_pre1st_step_table_norm[,1:10]-Total_pre1st_back,Total_pre1st_step_table_norm[,11:20]-Total_pre1st_back,Total_pre1st_step_table_norm[,21:30]-Total_pre1st_back)
 Total_pre1st_step_table_norm[which(Total_pre1st_step_table_norm < 0)] = 0
 
-Total_branched_table_norm = mapply('*', Total_branched_table, norm_fac)
-Total_branched_back = apply(Total_branched_table_norm, MARGIN = 1, function(x) mean(c(x[1],x[11],x[21])))
-Total_branched_table_norm= cbind(Total_branched_table_norm[,1:10]-Total_branched_back,Total_branched_table_norm[,11:20]-Total_branched_back,Total_branched_table_norm[,21:30]-Total_branched_back)
-Total_branched_table_norm[which(Total_branched_table_norm < 0)] = 0
+Total_lariat_int_table_norm = mapply('*', Total_branched_table, norm_fac)
+Total_lariat_back = apply(Total_lariat_int_table_norm, MARGIN = 1, function(x) mean(c(x[1],x[11],x[21])))
+Total_lariat_int_table_norm= cbind(Total_lariat_int_table_norm[,1:10]-Total_lariat_back,Total_lariat_int_table_norm[,11:20]-Total_lariat_back,Total_lariat_int_table_norm[,21:30]-Total_lariat_back)
+Total_lariat_int_table_norm[which(Total_lariat_int_table_norm < 0)] = 0
 
 #these are mostly annotated predicted introns with no evidence of splicing in our data. 
 erroneous_genes = c("SNR17A;1","SNR17B;1",'SPBP8B7.06;1','SPBC800.04c;1','SPBC18E5.06;1','SPAC1805.13;1','SPAC15E1.03;1',
@@ -127,6 +127,10 @@ erroneous_genes = c("SNR17A;1","SNR17B;1",'SPBP8B7.06;1','SPBC800.04c;1','SPBC18
 'YLR054C;1'
 )
 
+#write normalized counts
+write.table(Total_unspliced_table_norm, "WT_combined_concordant_unspliced_counts_norm.txt", sep = "\t") 
+write.table(Total_pre1st_step_table_norm, "WT_combined_pre1st_step_counts_norm.txt",  sep = "\t")
+write.table(Total_lariat_int_table_norm, "WT_combined_lariat_int_counts_norm.txt",  sep = "\t")
 
 #t_off calculation
 #0 and 90 second time points are removed from here on and several outlier samples are removed from here on.  
@@ -159,9 +163,7 @@ t_off = median(na.omit(x))
 
 
 #coupled rates models
-
-setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/data/Pipeline_V9/Updated modeling method/')
-colnames = c("synthesis_coupled_model",
+colnames_coupled = c("synthesis_coupled_model",
              "synthesis_coupled_model_90%CI_lower", 
              "synthesis_coupled_model_90%CI_upper", 
              "step1_rate_coupled_model",
@@ -170,8 +172,8 @@ colnames = c("synthesis_coupled_model",
              "step2_rate_coupled_model",
              "step2_rate_coupled_model_90%CI_lower",
              "step2_rate_coupled_model_90%CI_upper")
-Rates_mat_coupled = matrix(nrow = nrow(Total_unspliced_table), ncol = length(colnames))
-colnames(Rates_mat_coupled) <- colnames
+Rates_mat_coupled = matrix(nrow = nrow(Total_unspliced_table), ncol = length(colnames_coupled))
+colnames(Rates_mat_coupled) <- colnames_coupled
 row.names(Rates_mat_coupled) <- row.names(Total_unspliced_table)
 
 t = c(time_points[3:6], time_points[9:10], time_points[13:15], time_points[17:20], time_points[23:28], time_points[30])
@@ -183,7 +185,7 @@ for (i in 1:nrow(Total_unspliced_table)){
     next
   }
   y = c(Total_pre1st_step_table_norm[gene,3:6], Total_pre1st_step_table_norm[gene, 9:10], Total_pre1st_step_table_norm[gene,13:15], Total_pre1st_step_table_norm[gene, 17:20],Total_pre1st_step_table_norm[gene, 23:28], Total_pre1st_step_table_norm[gene, 30])
-  x = c(Total_branched_table_norm[gene,3:6], Total_branched_table_norm[gene, 9:10], Total_branched_table_norm[gene,13:15], Total_branched_table_norm[gene, 17:20],Total_branched_table_norm[gene, 23:28], Total_branched_table_norm[gene, 30])
+  x = c(Total_lariat_int_table_norm[gene,3:6], Total_lariat_int_table_norm[gene, 9:10], Total_lariat_int_table_norm[gene,13:15], Total_lariat_int_table_norm[gene, 17:20],Total_lariat_int_table_norm[gene, 23:28], Total_lariat_int_table_norm[gene, 30])
   d = NA
   p = NA
   d = data.frame(val = c(y,x), time = rep(t,2), ispre = c(rep(1,length(y)), rep(0,length(y))),isbra = c(rep(0,length(x)), rep(1,length(x))))
@@ -216,14 +218,14 @@ for (i in 1:nrow(Total_unspliced_table)){
 write.csv(Rates_mat_coupled, "Combined_rates_coupled_model_WT.csv")
 
 #total splicing rate model
-colnames = c("overall_splicing_hl_total_counts",
+colnames_total = c("overall_splicing_hl_total_counts",
              "overall_splicing_hl_total_counts_90%CI_lower", 
              "overall_splicing_hl_total_counts_90%CI_upper", 
              "Synthesis_rate_total_counts",
              "Synthesis_rate_total_counts_90%CI_lower",
              "Synthesis_rate_total_counts_90%CI_upper")
-Rates_mat_total = matrix(nrow = nrow(Total_unspliced_table), ncol = length(colnames))
-colnames(Rates_mat_total) <- colnames
+Rates_mat_total = matrix(nrow = nrow(Total_unspliced_table), ncol = length(colnames_total))
+colnames(Rates_mat_total) <- colnames_total
 row.names(Rates_mat_total) <- row.names(Total_unspliced_table)
 
 t = c(time_points[3:6], time_points[9:10], time_points[13:15], time_points[17:20], time_points[23:28], time_points[30])
