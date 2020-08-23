@@ -95,10 +95,10 @@ Total_pre1st_back = apply(Total_pre1st_step_table_norm, MARGIN = 1, function(x) 
 Total_pre1st_step_table_norm= cbind(Total_pre1st_step_table_norm[,1:10]-Total_pre1st_back,Total_pre1st_step_table_norm[,11:19]-Total_pre1st_back,Total_pre1st_step_table_norm[,20:29]-Total_pre1st_back)
 Total_pre1st_step_table_norm[which(Total_pre1st_step_table_norm < 0)] = 0
 
-Total_branched_table_norm = mapply('*', Total_branched_table, norm_fac)
-Total_branched_back = apply(Total_branched_table_norm, MARGIN = 1, function(x) mean(c(x[1],x[11],x[20])))
-Total_branched_table_norm= cbind(Total_branched_table_norm[,1:10]-Total_branched_back,Total_branched_table_norm[,11:19]-Total_branched_back,Total_branched_table_norm[,20:29]-Total_branched_back)
-Total_branched_table_norm[which(Total_branched_table_norm < 0)] = 0
+Total_lariat_int_table_norm = mapply('*', Total_branched_table, norm_fac)
+Total_lariat_back = apply(Total_lariat_int_table_norm, MARGIN = 1, function(x) mean(c(x[1],x[11],x[20])))
+Total_lariat_int_table_norm= cbind(Total_lariat_int_table_norm[,1:10]-Total_lariat_back,Total_lariat_int_table_norm[,11:19]-Total_lariat_back,Total_lariat_int_table_norm[,20:29]-Total_lariat_back)
+Total_lariat_int_table_norm[which(Total_lariat_int_table_norm < 0)] = 0
 
 #these are mostly annotated predicted introns with no evidence of splicing in our data. 
 erroneous_genes = c("SNR17A;1","SNR17B;1",'SPBP8B7.06;1','SPBC800.04c;1','SPBC18E5.06;1','SPAC1805.13;1','SPAC15E1.03;1',
@@ -126,6 +126,10 @@ erroneous_genes = c("SNR17A;1","SNR17B;1",'SPBP8B7.06;1','SPBC800.04c;1','SPBC18
 'YLR054C;1'
 )
 
+#write normalized counts
+write.table(Total_unspliced_table_norm, "prp2-1_combined_concordant_unspliced_counts_norm.txt", sep = "\t") 
+write.table(Total_pre1st_step_table_norm, "prp2-1_combined_pre1st_step_counts_norm.txt",  sep = "\t")
+write.table(Total_lariat_int_table_norm, "prp2-1_combined_lariat_int_counts_norm.txt",  sep = "\t")
 
 #t_off calculation
 #0, 120, and 150 second time points are removed from here on and several outlier samples are removed from here on.                             
@@ -178,7 +182,7 @@ for (i in 1:nrow(Total_unspliced_table)){
     next
   }
   y = c(Total_pre1st_step_table_norm[gene,4:10], Total_pre1st_step_table_norm[gene,13:17],Total_pre1st_step_table_norm[gene,19], Total_pre1st_step_table_norm[gene,23:29])
-  x = c(Total_branched_table_norm[gene,4:10], Total_branched_table_norm[gene,13:17], Total_branched_table_norm[gene,19],Total_branched_table_norm[gene,23:29])
+  x = c(Total_lariat_int_table_norm[gene,4:10], Total_lariat_int_table_norm[gene,13:17], Total_lariat_int_table_norm[gene,19],Total_lariat_int_table_norm[gene,23:29])
   d = NA
   p = NA
   d = data.frame(val = c(y,x), time = rep(t,2), ispre = c(rep(1,length(y)), rep(0,length(y))),isbra = c(rep(0,length(x)), rep(1,length(x))))
