@@ -6,7 +6,7 @@ library(nlme)
 
 # Load in data
 
-setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/prp2-1/Sequencing_data/Final_modeling')
+#setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/prp2-1/Sequencing_data/Final_modeling')
 
 Total_counts_table = read.delim('prp2-1_combined_total_counts_raw.txt', header = T)
 row.names(Total_counts_table) = Total_counts_table[,1]
