@@ -4,7 +4,7 @@ library(nlstools)
 library(nlme)
 
 # Load in data
-setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/data/Pipeline_V9/Final_modeling')
+#setwd('//cbsumbgfs1.biohpc.cornell.edu/storage/MBG-LAB-Pleiss/mag456/4-thio U labeling/Time course 5.2019/data/Pipeline_V9/Final_modeling')
 
 Total_counts_table = read.delim('WT_combined_total_counts_raw.txt', header = T)
 row.names(Total_counts_table) = Total_counts_table[,1]
